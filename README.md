@@ -203,3 +203,106 @@ zfsdisk1  compression  lzjb      local
 
 Из этого можно сдеалть вывод, что для текстовых файлов максимальную степень сжатия можно получить используя алгоритм lzjb.
 
+## Определение настроек пула
+
+* загрузить архив с файлами локально. https://drive.google.com/open?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg Распаковать.
+* с помощью команды zfs import собрать pool ZFS;
+* командами zfs определить настройки:
+* размер хранилища;
+* тип pool;
+* значение recordsize;
+* какое сжатие используется;
+* какая контрольная сумма используется.
+
+### Результат:
+* список команд которыми восстановили pool . Желательно с Output команд;
+* файл с описанием настроек settings.
+
+### Решение
+
+Скачиваем файл - https://drive.google.com/open?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg
+[root@zfs ~]# wget -O zfs_task1.tar.gz https://drive.google.com/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg&export=download
+[1] 32035
+[root@zfs ~]# --2023-09-24 18:10:31--  https://drive.google.com/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg
+Resolving drive.google.com (drive.google.com)... 64.233.163.194, 2a00:1450:4010:c07::c2
+Connecting to drive.google.com (drive.google.com)|64.233.163.194|:443... connected.
+HTTP request sent, awaiting response... 303 See Other
+Location: https://doc-0c-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/ni4nq61gklgabsfk54pfjrhrbhndu8im/1695742200000/16189157874053420687/*/1KRBNW33QWqbvbVHa3hLJivOAt60yukkg?uuid=5e3a5ead-b0b0-4999-9e9f-da0066822e4a [following]
+Warning: wildcards not supported in HTTP.
+--2023-09-24 18:10:35--  https://doc-0c-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/ni4nq61gklgabsfk54pfjrhrbhndu8im/1695742200000/16189157874053420687/*/1KRBNW33QWqbvbVHa3hLJivOAt60yukkg?uuid=5e3a5ead-b0b0-4999-9e9f-da0066822e4a
+Resolving doc-0c-bo-docs.googleusercontent.com (doc-0c-bo-docs.googleusercontent.com)... 216.58.210.129, 2a00:1450:4026:808::2001
+Connecting to doc-0c-bo-docs.googleusercontent.com (doc-0c-bo-docs.googleusercontent.com)|216.58.210.129|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 7275140 (6.9M) [application/x-gzip]
+Saving to: ‘zfs_task1.tar.gz’
+
+100%[=====================================================================================================================================================================================================================================>] 7,275,140   2.28MB/s   in 3.0s
+
+2023-09-24 18:10:38 (2.28 MB/s) - ‘zfs_task1.tar.gz’ saved [7275140/7275140]
+
+
+[1]+  Done                    wget -O zfs_task1.tar.gz https://drive.google.com/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg
+
+Далее разархивируем его
+[root@zfs ~]# tar -xzvf zfs_task1.tar.gz
+zpoolexport/
+zpoolexport/filea
+zpoolexport/fileb
+
+Теперь посмотрим подробнее на получившийся каталог и проверим возможность импортирования файловой системы
+ [root@zfs ~]# zpool import -d zpoolexport/
+   pool: otus
+     id: 6554193320433390805
+  state: ONLINE
+ action: The pool can be imported using its name or numeric identifier.
+ config:
+
+        otus                         ONLINE
+          mirror-0                   ONLINE
+            /root/zpoolexport/filea  ONLINE
+            /root/zpoolexport/fileb  ONLINE
+			
+Видим, что перед нами pool с именем otus, который представляет из себя зеркало и может быть импортирован в нашу систему.
+
+Сделаем импорт
+[root@zfs ~]# zpool import -d zpoolexport/ otus
+
+Проверим успешность импорта
+[root@zfs ~]# zpool status otus
+  pool: otus
+ state: ONLINE
+  scan: none requested
+config:
+
+        NAME                         STATE     READ WRITE CKSUM
+        otus                         ONLINE       0     0     0
+          mirror-0                   ONLINE       0     0     0
+            /root/zpoolexport/filea  ONLINE       0     0     0
+            /root/zpoolexport/fileb  ONLINE       0     0     0
+
+errors: No known data errors
+
+Определяем объём (размер хранилища)
+[root@zfs ~]# zfs get available otus
+NAME  PROPERTY   VALUE  SOURCE
+otus  available  350M   -
+
+Определяем тип
+[root@zfs ~]# zfs get type otus
+NAME  PROPERTY  VALUE       SOURCE
+otus  type      filesystem  -
+
+Определяем значение recordsize
+[root@zfs ~]# zfs get recordsize otus
+NAME  PROPERTY    VALUE    SOURCE
+otus  recordsize  128K     local
+
+Определяем какое сжатие используется
+[root@zfs ~]# zfs get compression otus
+NAME  PROPERTY     VALUE     SOURCE
+otus  compression  zle       local
+
+Определяем какая контрольная сумма используется
+[root@zfs ~]# zfs get checksum otus
+NAME  PROPERTY  VALUE      SOURCE
+otus  checksum  sha256     local
