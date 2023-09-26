@@ -14,25 +14,25 @@
 
 ### Решение
 
-Для начала посмотрим какие диски у нас есть.
-[root@zfs ~]# lsblk
-NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-sda      8:0    0   40G  0 disk
-└─sda1   8:1    0   40G  0 part /
-sdb      8:16   0  512M  0 disk
-sdc      8:32   0  512M  0 disk
-sdd      8:48   0  512M  0 disk
-sde      8:64   0  512M  0 disk
-sdf      8:80   0  512M  0 disk
-sdg      8:96   0  512M  0 disk
-sdh      8:112  0  512M  0 disk
-sdi      8:128  0  512M  0 disk
+Для начала посмотрим какие диски у нас есть. \
+[root@zfs ~]# lsblk \
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT \
+sda      8:0    0   40G  0 disk \
+└─sda1   8:1    0   40G  0 part / \
+sdb      8:16   0  512M  0 disk \
+sdc      8:32   0  512M  0 disk \
+sdd      8:48   0  512M  0 disk \
+sde      8:64   0  512M  0 disk \
+sdf      8:80   0  512M  0 disk \
+sdg      8:96   0  512M  0 disk \
+sdh      8:112  0  512M  0 disk \
+sdi      8:128  0  512M  0 disk \
 
-Всего доступно 8 свободных дисков. Разделим диски по парам, из пар соберём raid1 и сделаем 4 файловые системы zfs.
-[root@zfs ~]# zpool create zfsdisk1 mirror /dev/sdb /dev/sdc
-[root@zfs ~]# zpool create zfsdisk2 mirror /dev/sdd /dev/sde
-[root@zfs ~]# zpool create zfsdisk3 mirror /dev/sdf /dev/sdg
-[root@zfs ~]# zpool create zfsdisk4 mirror /dev/sdh /dev/sdi
+Всего доступно 8 свободных дисков. Разделим диски по парам, из пар соберём raid1 и сделаем 4 файловые системы zfs. \
+[root@zfs ~]# zpool create zfsdisk1 mirror /dev/sdb /dev/sdc \
+[root@zfs ~]# zpool create zfsdisk2 mirror /dev/sdd /dev/sde \
+[root@zfs ~]# zpool create zfsdisk3 mirror /dev/sdf /dev/sdg \
+[root@zfs ~]# zpool create zfsdisk4 mirror /dev/sdh /dev/sdi \
 
 Для проверки посмотрим что содержит наш zpool.
 [root@zfs ~]# zpool list
