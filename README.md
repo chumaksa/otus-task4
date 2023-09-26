@@ -306,3 +306,51 @@ otus  compression  zle       local
 [root@zfs ~]# zfs get checksum otus
 NAME  PROPERTY  VALUE      SOURCE
 otus  checksum  sha256     local
+
+## Найти сообщение от преподавателей
+
+* скопировать файл из удаленной директории. https://drive.google.com/file/d/1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG/view?usp=sharing
+* Файл был получен командой zfs send otus/storage@task2 > otus_task2.file
+* восстановить файл локально. zfs receive
+* найти зашифрованное сообщение в файле secret_message
+
+### Результат:
+* список шагов которыми восстанавливали;
+* зашифрованное сообщение.
+
+### Решение
+
+Копируем удаленный файл снапшота
+[root@zfs ~]# wget -O otus_task2.file https://drive.google.com/uc?id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG&export=download
+[1] 32510
+[root@zfs ~]# --2023-09-24 18:49:32--  https://drive.google.com/uc?id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG
+Resolving drive.google.com (drive.google.com)... 64.233.163.194, 2a00:1450:4010:c07::c2
+Connecting to drive.google.com (drive.google.com)|64.233.163.194|:443... connected.
+HTTP request sent, awaiting response... 303 See Other
+Location: https://doc-00-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/las68dprd66h386sflb835ncgeue00ps/1695744300000/16189157874053420687/*/1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG?uuid=308a9752-752e-4681-aa2b-31ef34e48ed9 [following]
+Warning: wildcards not supported in HTTP.
+--2023-09-24 18:49:33--  https://doc-00-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/las68dprd66h386sflb835ncgeue00ps/1695744300000/16189157874053420687/*/1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG?uuid=308a9752-752e-4681-aa2b-31ef34e48ed9
+Resolving doc-00-bo-docs.googleusercontent.com (doc-00-bo-docs.googleusercontent.com)... 216.58.210.129, 2a00:1450:400f:803::2001
+Connecting to doc-00-bo-docs.googleusercontent.com (doc-00-bo-docs.googleusercontent.com)|216.58.210.129|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 5432736 (5.2M) [application/octet-stream]
+Saving to: ‘otus_task2.file’
+
+100%[=====================================================================================================================================================================================================================================>] 5,432,736   1.95MB/s   in 2.7s
+
+2023-09-24 18:49:37 (1.95 MB/s) - ‘otus_task2.file’ saved [5432736/5432736]
+
+
+[1]+  Done                    wget -O otus_task2.file https://drive.google.com/uc?id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG
+
+Восстанавливаем файловую систему из снапшота
+[root@zfs ~]# zfs receive otus/test@today < otus_task2.file
+
+Ищем файл secret_message
+[root@zfs ~]# find /otus/test/ -name "secret_message"
+/otus/test/task1/file_mess/secret_message
+
+Смотрим содержимое этого файла
+[root@zfs ~]# cat /otus/test/task1/file_mess/secret_message
+https://github.com/sindresorhus/awesome
+
